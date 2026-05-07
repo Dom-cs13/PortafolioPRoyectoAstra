@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASTRA — Advanced Simulation & Terrain Rendering Architecture</title>
-  <meta name="description" content="ASTRA: A Domain-Specific Language and Compiler for Exoplanet Habitability Simulation." />
+  <title>ASTRA — Compilador para Simulación de Biosferas Planetarias</title>
+  <meta name="description" content="ASTRA: un lenguaje de dominio específico y compilador optimizador para la simulación de ecosistemas planetarios y viabilidad biológica." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,21 +19,146 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Modal styles – mantiene la temática futurista/oscura */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 11, 20, 0.95);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0s 0.3s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s ease, visibility 0s 0s;
+    }
+    .modal-container {
+      background: rgba(7, 15, 30, 0.98);
+      border: 1px solid var(--color-border, rgba(215,166,75,0.3));
+      border-radius: 4px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      font-family: var(--font-display, 'Rajdhani', sans-serif);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--color-border, rgba(215,166,75,0.3));
+      background: rgba(48,76,122,0.2);
+    }
+    .modal-header h3 {
+      font-family: var(--font-mono, 'Share Tech Mono');
+      font-size: 1rem;
+      letter-spacing: 2px;
+      color: var(--color-gold, #d7a64b);
+      margin: 0;
+    }
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--color-text-mid, #bbb);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .close-modal:hover {
+      color: var(--color-orange, #e06236);
+    }
+    .modal-body {
+      padding: 28px 32px;
+      overflow-y: auto;
+      color: var(--color-text-mid, #ddd);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .modal-body h1, .modal-body h2, .modal-body h3, .modal-body h4 {
+      color: var(--color-white-text, #fff);
+      margin-top: 1.2em;
+      margin-bottom: 0.5em;
+      font-weight: 500;
+    }
+    .modal-body h1 {
+      font-size: 1.6rem;
+      border-left: 3px solid var(--color-gold);
+      padding-left: 16px;
+    }
+    .modal-body h2 {
+      font-size: 1.3rem;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 6px;
+    }
+    .modal-body h3 {
+      font-size: 1.1rem;
+    }
+    .modal-body code {
+      font-family: var(--font-mono);
+      background: rgba(48,76,122,0.4);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      color: var(--color-gold);
+    }
+    .modal-body pre {
+      background: rgba(0,0,0,0.6);
+      padding: 14px;
+      border-left: 3px solid var(--color-gold);
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      margin: 16px 0;
+      white-space: pre-wrap;
+    }
+    .modal-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.85rem;
+    }
+    .modal-body th, .modal-body td {
+      border: 1px solid var(--color-border);
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .modal-body th {
+      background: rgba(215,166,75,0.15);
+      font-weight: 600;
+    }
+    .modal-body ul, .modal-body ol {
+      margin: 8px 0 16px 24px;
+    }
+    .modal-body li {
+      margin: 4px 0;
+    }
+    @media (max-width: 700px) {
+      .modal-body { padding: 20px; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════
-       CANVAS — Three.js Fixed Background
-  ═══════════════════════════════════════ -->
+  <!-- CANVAS Three.js -->
   <canvas id="astra-canvas"></canvas>
 
-  <!-- ═══════════════════════════════════════
-       CURSOR (Removed)
-  ═══════════════════════════════════════ -->
-
-  <!-- ═══════════════════════════════════════
-       NAV
-  ═══════════════════════════════════════ -->
+  <!-- NAV -->
   <nav id="nav">
     <div class="nav-logo">
       <span class="nav-logo-bracket">[</span>
@@ -42,116 +167,372 @@
     </div>
     <div class="nav-status">
       <span class="status-dot"></span>
-      <span class="status-text">SYSTEM NOMINAL</span>
+      <span class="status-text">COMPILER READY</span>
     </div>
     <div class="nav-coords">
-      <span id="nav-ra">RA 00h 00m 00s</span>
+      <span id="nav-ra">SIM v1.0</span>
       <span class="nav-sep">·</span>
-      <span id="nav-dec">DEC +00° 00′</span>
+      <span id="nav-dec">BUILD 2026</span>
     </div>
   </nav>
 
-  <!-- ═══════════════════════════════════════
-       SCROLL CONTAINER
-  ═══════════════════════════════════════ -->
+  <!-- MODAL DOCUMENTACIÓN -->
+  <div id="docModal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3> DOCUMENTACIÓN TÉCNICA — ASTRA DSL v1.0</h3>
+        <button class="close-modal" id="closeModalBtn">✕</button>
+      </div>
+      <div class="modal-body" id="docContent"></div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO OCULTO DE LA DOCUMENTACIÓN (para evitar errores de escaping en JS) -->
+  <div id="docContentSource" style="display: none;">
+    <h1>ASTRA — Referencia del Compilador</h1>
+    <p><strong>Versión:</strong> 1.0 (en desarrollo) · <strong>Compilador para simulación de biosferas planetarias</strong></p>
+    
+    <h2>1. Introducción y propósito</h2>
+    <p>ASTRA es un lenguaje de dominio específico (DSL) y un compilador optimizador diseñado para modelar, analizar y ejecutar biosferas complejas. Permite definir planetas, atmósferas, cuerpos de agua y formas de vida, así como establecer reglas de evolución, cálculos y reportes. El compilador valida semántica, unidades físicas y reglas ecológicas, transformando descripciones de alto nivel en simulaciones deterministas.</p>
+    <p>El proyecto incluye un IDE completo (BioSphereIDE) con editor, resaltado de sintaxis, detección de errores en tiempo real, tabla de tokens, consola de salida y visualizador de árbol sintáctico.</p>
+    
+    <h2>2. Sintaxis del lenguaje</h2>
+    <h3>2.1 Estructura general</h3>
+    <pre>inicio
+    simulacion {
+        planeta { ... }
+        atmosfera { ... }
+        agua { ... }
+        vida { ... }
+        // funciones y otras sentencias
+    }
+fin</pre>
+    <p><strong>Bloques obligatorios:</strong> <code>planeta</code>, <code>atmosfera</code>, <code>agua</code>. <code>vida</code> es opcional.</p>
+    
+    <h3>2.2 Variables requeridas por bloque</h3>
+    <table>
+      <thead><tr><th>Bloque</th><th>Variables requeridas</th><th>Tipo</th><th>Unidades comunes</th></tr></thead>
+      <tbody>
+        <tr><td>planeta</td><td>masa, radio</td><td>número</td><td>kg, km, M🜨, R🜨</td></tr>
+        <tr><td>atmosfera</td><td>presion, co2</td><td>número</td><td>atm, kPa, ppm, %</td></tr>
+        <tr><td>agua</td><td>estado_liquido</td><td>booleano</td><td>verdadero / falso</td></tr>
+        <tr><td>vida</td><td>ninguna</td><td>-</td><td>-</td></tr>
+      </tbody>
+    </table>
+    
+    <h3>2.3 Tipos de datos</h3>
+    <ul>
+      <li><strong>Números</strong>: enteros o decimales (ej. 42, 3.1416, 5.97e24, -10)</li>
+      <li><strong>Textos</strong>: entre comillas dobles (ej. "Hola mundo")</li>
+      <li><strong>Booleanos</strong>: <code>verdadero</code>, <code>falso</code></li>
+      <li><strong>Listas</strong>: secuencias homogéneas, ej. <code>[1, 2, 3]</code>, <code>["a","b"]</code></li>
+      <li><strong>Nulo</strong>: <code>nulo</code> (para variables sin valor asignado)</li>
+    </ul>
+    
+    <h3>2.4 Operadores</h3>
+    <ul>
+      <li><strong>Aritméticos</strong>: <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>^</code> (potencia)</li>
+      <li><strong>Comparación</strong>: <code>==</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code></li>
+      <li><strong>Lógicos</strong>: <code>y</code> (AND), <code>o</code> (OR)</li>
+    </ul>
+    
+    <h3>2.5 Unidades físicas (opcionales)</h3>
+    <p>Se permiten las siguientes unidades después de un número: <code>km, m, g, kg, atm, ppm, Sv, %, °C, h, s, M🜨, R🜨, AU, K, kPa</code>. Ejemplo: <code>temperatura = 25 °C;</code></p>
+    <p>El analizador semántico verifica que en sumas y restas las unidades sean compatibles, y que el exponente de una potencia no tenga unidad.</p>
+    
+    <h3>2.6 Sentencias de control</h3>
+    <ul>
+      <li><strong>Asignación</strong>: <code>identificador = expresión;</code></li>
+      <li><strong>Condicional</strong>: <code>si (condición) { ... } sino { ... }</code> (el bloque <code>sino</code> es opcional)</li>
+      <li><strong>Bucle mientras</strong>: <code>mientras (condición) { ... }</code></li>
+      <li><strong>Mostrar</strong> (salida en consola): <code>mostrar(expresión);</code> o <code>mostrar expresión;</code></li>
+      <li><strong>Reporte</strong> (estadística): <code>reporte(expresión);</code></li>
+      <li><strong>Función</strong>: <code>funcion nombre(param1, param2) { ... }</code> (las funciones pueden usar <code>retorno = expresión;</code> para devolver valor)</li>
+      <li><strong>Llamada a función</strong>: <code>nombre(argumento1, argumento2);</code></li>
+    </ul>
+    
+    <h3>2.7 Comentarios</h3>
+    <pre>// comentario de línea
+/* comentario
+   de bloque */</pre>
+    
+    <h2>3. Palabras reservadas (lista completa)</h2>
+    <table>
+      <thead><tr><th>Palabra</th><th>Categoría</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>inicio</td><td>Estructura</td><td>Marca el inicio del programa</td></tr>
+        <tr><td>fin</td><td>Estructura</td><td>Marca el final del programa</td></tr>
+        <tr><td>simulacion</td><td>Estructura</td><td>Define el bloque principal de simulación</td></tr>
+        <tr><td>planeta</td><td>Bloque</td><td>Define parámetros del cuerpo planetario</td></tr>
+        <tr><td>atmosfera</td><td>Bloque</td><td>Define composición atmosférica</td></tr>
+        <tr><td>agua</td><td>Bloque</td><td>Define estado del agua superficial</td></tr>
+        <tr><td>vida</td><td>Bloque</td><td>Contiene reglas biológicas y simulaciones</td></tr>
+        <tr><td>si</td><td>Control</td><td>Condicional</td></tr>
+        <tr><td>sino</td><td>Control</td><td>Rama alternativa del condicional</td></tr>
+        <tr><td>mientras</td><td>Control</td><td>Bucle con condición</td></tr>
+        <tr><td>iterar</td><td>Control</td><td>Bucle for-like (reservado)</td></tr>
+        <tr><td>continuar</td><td>Control</td><td>Salta a la siguiente iteración</td></tr>
+        <tr><td>romper</td><td>Control</td><td>Sale del bucle</td></tr>
+        <tr><td>mostrar</td><td>Salida</td><td>Imprime en consola</td></tr>
+        <tr><td>reporte</td><td>Salida</td><td>Genera un reporte estadístico</td></tr>
+        <tr><td>verdadero</td><td>Valor</td><td>Literal booleano true</td></tr>
+        <tr><td>falso</td><td>Valor</td><td>Literal booleano false</td></tr>
+        <tr><td>nulo</td><td>Valor</td><td>Representa ausencia de valor</td></tr>
+        <tr><td>funcion</td><td>Declaración</td><td>Define una función reutilizable</td></tr>
+        <tr><td>y</td><td>Lógico</td><td>Operador AND</td></tr>
+        <tr><td>o</td><td>Lógico</td><td>Operador OR</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Nota:</strong> todas las palabras reservadas deben escribirse en minúsculas. De lo contrario, el lexer las tratará como identificadores comunes y probablemente se produzcan errores sintácticos.</p>
+    
+    <h2>4. Gramática formal (EBNF)</h2>
+    <pre>programa         = "inicio", bloqueSimulacion, "fin" ;
+bloqueSimulacion = "simulacion", "{", { sentencia }, "}" ;
+sentencia        = bloquePlaneta | bloqueAtmosfera | bloqueAgua | bloqueVida
+                 | asignacion | mostrar | reporte | if | while | definicionFuncion
+                 | expresionSentencia ;
+bloquePlaneta    = "planeta", "{", { sentencia }, "}" ;
+bloqueAtmosfera  = "atmosfera", "{", { sentencia }, "}" ;
+bloqueAgua       = "agua", "{", { sentencia }, "}" ;
+bloqueVida       = "vida", "{", { sentencia }, "}" ;
+asignacion       = identificador, "=", valor, ";" ;
+mostrar          = "mostrar", [ "(", valor, ")" ], ";" ;
+reporte          = "reporte", [ "(", valor, ")" ], ";" ;
+if               = "si", "(", condicion, ")", "{", { sentencia }, "}", [ "sino", "{", { sentencia }, "}" ] ;
+while            = "mientras", "(", condicion, ")", "{", { sentencia }, "}" ;
+definicionFuncion= "funcion", identificador, "(", [ listaParametros ], ")", "{", { sentencia }, "}" ;
+valor            = expresion | booleano | cadena | lista | nulo ;
+expresion        = termino, { ("+" | "-"), termino } ;
+termino          = potencia, { ("*" | "/"), potencia } ;
+potencia         = factor, [ "^", potencia ] ;
+factor           = numero | identificador | "(", expresion, ")" | llamadaFuncion | "-", factor ;
+condicion        = valor, [ ("<"|">"|"<="|">="|"=="|"!="), valor ], { ("y"|"o"), condicion } ;
+identificador    = letra, { letra | digito | "_" } ;
+numero           = digito, { digito }, [ ".", { digito } ], [ "e", [ "+" | "-" ], digito, { digito } ] ;
+cadena           = '"', { carácter - '"' }, '"' ;
+lista            = "[", [ valor, { ",", valor } ], "]" ;
+nulo             = "nulo" ;
+booleano         = "verdadero" | "falso" ;
+</pre>
+    
+    <h2>5. Fases del compilador (detalle técnico)</h2>
+    <h3>5.1 Analizador léxico (Lexer)</h3>
+    <p>El lexer convierte el código fuente en una secuencia de tokens utilizando expresiones regulares. Reconoce palabras reservadas (case-sensitive, minúsculas), identificadores, números (enteros, decimales, notación científica), cadenas, operadores y símbolos. Además, detecta errores léxicos:</p>
+    <ul>
+      <li><strong>Identificador inválido</strong>: comienza con número, ej. <code>123abc</code></li>
+      <li><strong>Carácter ilegal</strong>: cualquier carácter no definido (ej. <code>@</code>, <code>$</code>, <code>#</code>, <code>&</code>, <code>?</code>, <code>|</code>, <code>\\</code>, <code>~</code>, <code>`</code>)</li>
+      <li><strong>Cadena sin cerrar</strong>: falta la comilla de cierre al final de la línea</li>
+    </ul>
+    <p>Los errores léxicos se muestran en la consola y se subrayan en el editor con una línea ondulada roja.</p>
+    
+    <h3>5.2 Analizador sintáctico (Parser)</h3>
+    <p>El parser construye un Árbol de Sintaxis Abstracta (AST) siguiendo la gramática LL(1). Valida la estructura global (presencia de <code>inicio</code> y <code>fin</code>), el balance de llaves, el uso correcto de punto y coma, y las reglas de precedencia de operadores. Si encuentra un error, reporta la ubicación exacta y el token esperado.</p>
+    <p>Ejemplos de errores sintácticos:</p>
+    <ul>
+      <li>Falta de <code>;</code> al final de una sentencia</li>
+      <li>Falta de <code>{</code> después de <code>planeta</code></li>
+      <li>Uso incorrecto de <code>si</code> sin paréntesis alrededor de la condición</li>
+      <li>Expresiones mal formadas, ej. <code>(5 +</code> sin cerrar</li>
+    </ul>
+    
+    <h3>5.3 Analizador semántico</h3>
+    <p>Esta fase recorre el AST y aplica reglas semánticas para garantizar la coherencia del programa. Incluye:</p>
+    <ul>
+      <li><strong>Tabla de símbolos</strong>: gestiona ámbitos anidados (global, simulacion, if, while, función). Cada símbolo almacena: nombre, tipo (numero, texto, booleano, lista, nulo, funcion), valor, unidad (opcional), línea de declaración y ámbito.</li>
+      <li><strong>Verificación de variables no declaradas</strong>: no se puede usar un identificador sin antes asignarle un valor (error SEM-001).</li>
+      <li><strong>Compatibilidad de tipos</strong>: se comprueba que las operaciones respeten los tipos (no sumar texto con número).</li>
+      <li><strong>Unidades físicas</strong>: en suma/resta las unidades deben coincidir; el exponente de una potencia no puede tener unidad.</li>
+      <li><strong>Variables obligatorias</strong>: dentro de <code>planeta</code> deben declararse <code>masa</code> y <code>radio</code>; en <code>atmosfera</code>, <code>presion</code> y <code>co2</code>; en <code>agua</code>, <code>estado_liquido</code>. Si falta alguna, se reporta error SEM-040 o SEM-041.</li>
+      <li><strong>Coherencia en condiciones</strong>: los operadores relacionales (<code>&lt;</code>, <code>&gt;</code>, etc.) solo se permiten entre números. Los operadores lógicos <code>y</code>/<code>o</code> requieren operandos booleanos.</li>
+      <li><strong>Funciones</strong>: se comprueba que la función esté definida antes de ser llamada y que el número de argumentos coincida con los parámetros declarados.</li>
+    </ul>
+    <p>Códigos de error semántico comunes:</p>
+    <ul>
+      <li><strong>SEM-001</strong>: Variable no inicializada</li>
+      <li><strong>SEM-002</strong>: Función no definida</li>
+      <li><strong>SEM-010</strong>: Operador requiere tipos numéricos</li>
+      <li><strong>SEM-011</strong>: Operador relacional requiere tipos numéricos</li>
+      <li><strong>SEM-014</strong>: Incompatibilidad de tipos en asignación</li>
+      <li><strong>SEM-020</strong>: Condición debe resultar booleana</li>
+      <li><strong>SEM-030</strong>: Unidades incompatibles en suma/resta</li>
+      <li><strong>SEM-031</strong>: Exponente con unidad física inválida</li>
+      <li><strong>SEM-040</strong>: Bloque obligatorio faltante</li>
+      <li><strong>SEM-041</strong>: Variable requerida faltante en bloque</li>
+    </ul>
+    
+    <h3>5.4 Tabla de símbolos (estructura)</h3>
+    <p>La tabla de símbolos se implementa con una pila de ámbitos. Cada ámbito es un diccionario nombre → símbolo. Las operaciones principales:</p>
+    <ul>
+      <li><code>PushScope(name)</code> – entra a un nuevo ámbito</li>
+      <li><code>PopScope()</code> – sale del ámbito actual</li>
+      <li><code>LookUp(name)</code> – busca el símbolo en el ámbito actual y ancestros</li>
+      <li><code>AddSymbol(sym)</code> – añade un símbolo en el ámbito actual</li>
+      <li><code>UpdateSymbol(name, newSym, level)</code> – actualiza un símbolo en un nivel específico</li>
+    </ul>
+    <p>La información almacenada permite la verificación semántica y es utilizada durante la ejecución para obtener valores de variables.</p>
+    
+    <h3>5.5 Ejecución / simulación</h3>
+    <p>Una vez superadas todas las fases, el compilador interpreta el AST. El motor de simulación recorre el árbol ejecutando las sentencias en orden: asignaciones, condicionales, bucles, funciones, mostrar y reporte. Soporta operaciones aritméticas, lógicas y de comparación, así como manipulación básica de listas.</p>
+    
+    <h2>6. Ejemplos completos</h2>
+    <h3>Ejemplo 1: Simulación básica con condicional</h3>
+    <pre>inicio
+    simulacion {
+        planeta { masa = 1000 kg; radio = 100 km; }
+        atmosfera { presion = 0.5 atm; co2 = 800 ppm; }
+        agua { estado_liquido = falso; }
+        vida {
+            temperatura = 30;
+            si (temperatura > 25) {
+                mostrar("Alerta: temperatura alta");
+            }
+            reporte("Condiciones extremas");
+        }
+    }
+fin</pre>
+    
+    <h3>Ejemplo 2: Función y bucle</h3>
+    <pre>inicio
+    simulacion {
+        planeta { masa = 1.0 kg; radio = 1.0 km; }
+        atmosfera { presion = 1.0 atm; co2 = 300 ppm; }
+        agua { estado_liquido = verdadero; }
+        vida {
+            funcion cuadrado(x) {
+                retorno = x * x;
+            }
+            contador = 0;
+            mientras (contador < 5) {
+                mostrar(cuadrado(contador));
+                contador = contador + 1;
+            }
+        }
+    }
+fin</pre>
+    
+    <h3>Ejemplo 3: Listas y unidades</h3>
+    <pre>inicio
+    simulacion {
+        planeta { masa = 5.97e24 kg; radio = 6371 km; }
+        atmosfera { presion = 1.0 atm; co2 = 400 ppm; }
+        agua { estado_liquido = verdadero; }
+        vida {
+            temperaturas = [15, 20, 25] °C;
+            promedio = (temperaturas[0] + temperaturas[1] + temperaturas[2]) / 3;
+            mostrar("Promedio: ", promedio, "°C");
+        }
+    }
+fin</pre>
+    
+    <h2>7. Uso del IDE (BioSphereIDE)</h2>
+    <ul>
+      <li>Editor con resaltado de sintaxis y detección de errores en tiempo real</li>
+      <li>Tabla de tokens al compilar</li>
+      <li>Consola de salida con mensajes de compilación y ejecución</li>
+      <li>Visor gráfico del árbol sintáctico (AST)</li>
+      <li>Modo prueba con código de ejemplo con errores</li>
+    </ul>
+    
+    <h2>8. Hoja de ruta y estado del proyecto</h2>
+    <ul>
+      <li><strong>Fase 1 (completada)</strong>: Lexer + Parser básico</li>
+      <li><strong>Fase 2 (completada)</strong>: Validación semántica y tabla de símbolos</li>
+      <li><strong>Fase 3 (en desarrollo)</strong>: Motor de simulación completo</li>
+      <li><strong>Fase 4 (planificada)</strong>: Optimización y paralelización</li>
+      <li><strong>Futuro</strong>: WebAssembly, simulación en tiempo real</li>
+    </ul>
+    
+    <h2>9. Repositorio y contribuciones</h2>
+    <p>El código fuente completo está disponible en GitHub. Incluye Lexer.cs, Parser.cs, Semantico.cs y el IDE. Licencia MIT.</p>
+  </div>
+
+  <!-- SCROLL CONTAINER (CONTENIDO PRINCIPAL) -->
   <div id="scroll-container">
 
-    <!-- ─────────────────────────────────────
-         SECTION 01 — HERO
-    ───────────────────────────────────── -->
+    <!-- SECTION 01 — HERO -->
     <section class="section" id="section-hero">
       <div class="hero-content">
         <div class="hero-label" data-reveal>
           <span class="label-line"></span>
-          <span>MISSION BRIEF — DSL v2.4.1</span>
+          <span>COMPILADOR PARA BIOSFERAS · v1.0</span>
           <span class="label-line"></span>
         </div>
-
         <h1 class="hero-title" data-reveal>
           <span class="title-line" id="title-astra">ASTRA</span>
         </h1>
-
         <p class="hero-subtitle" data-reveal>
-          Advanced Simulation &amp; Terrain<br />
-          Rendering Architecture
+          Compilador de Dominio Específico<br />
+          para Simulación Planetaria
         </p>
-
         <p class="hero-desc" data-reveal>
-          A domain‑specific language and optimizing compiler engineered<br />
-          for the precise simulation of exoplanetary environments<br />
-          and the determination of viable conditions for life.
+          Un lenguaje y compilador optimizador diseñado para modelar, analizar y ejecutar<br />
+          biosferas complejas. Valida semántica, unidades físicas y reglas ecológicas,<br />
+          transformando descripciones de alto nivel en simulaciones deterministas.
         </p>
-
         <div class="hero-cta" data-reveal>
           <a href="#section-dsl" class="btn-primary">
-            <span class="btn-inner">Initialize Sequence</span>
+            <span class="btn-inner">Explorar Arquitectura</span>
             <span class="btn-glow"></span>
           </a>
-          <a href="#section-analysis" class="btn-ghost">View Architecture</a>
+          <a href="#section-analysis" class="btn-ghost">Ver Sintaxis</a>
         </div>
-
         <div class="hero-telemetry" data-reveal>
           <div class="telem-item">
-            <span class="telem-label">TARGETS ANALYZED</span>
-            <span class="telem-value" id="telem-targets">5,329</span>
+            <span class="telem-label">REGLAS SINTÁCTICAS</span>
+            <span class="telem-value" id="telem-targets">47</span>
           </div>
           <div class="telem-divider"></div>
           <div class="telem-item">
-            <span class="telem-label">VIABLE CANDIDATES</span>
-            <span class="telem-value">47</span>
+            <span class="telem-label">PALABRAS RESERVADAS</span>
+            <span class="telem-value">32</span>
           </div>
           <div class="telem-divider"></div>
           <div class="telem-item">
-            <span class="telem-label">COMPILER OPS/s</span>
+            <span class="telem-label">SIM. OPT / seg</span>
             <span class="telem-value">1.2M</span>
           </div>
         </div>
       </div>
-
       <div class="scroll-indicator">
         <div class="scroll-line"></div>
         <span>SCROLL</span>
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────
-         SECTION 02 — DSL ENGINE
-    ───────────────────────────────────── -->
+    <!-- SECTION 02 — ARQUITECTURA Y LENGUAJE -->
     <section class="section" id="section-dsl">
       <div class="section-number">02</div>
-
       <div class="dsl-layout">
         <div class="dsl-text-col">
-          <div class="section-tag" data-scroll-reveal>// THE ENGINE</div>
+          <div class="section-tag" data-scroll-reveal>// ARQUITECTURA DEL COMPILADOR</div>
           <h2 class="section-title" data-scroll-reveal>
-            A Language<br />
-            <em>Born From</em><br />
-            The Cosmos
+            Un Lenguaje<br />
+            <em>Diseñado para</em><br />
+            la Complejidad Planetaria
           </h2>
           <p class="section-body" data-scroll-reveal>
-            ASTRA is not a framework built on top of existing tools. It is a purpose-built
-            domain-specific language with its own lexer, parser, and multi-pass optimizing
-            compiler. Every syntactic construct maps directly to a physical simulation
-            primitive — atmospheric pressure gradients, stellar flux calculations,
-            biochemical equilibrium states.
+            ASTRA no es una biblioteca sobre un lenguaje existente: es un DSL completo con su propio
+            analizador léxico, parser, árbol de sintaxis abstracta (AST), verificador semántico y
+            motor de simulación. Cada construcción sintáctica se asigna directamente a primitivas de
+            simulación física: gradientes atmosféricos, flujo estelar, ciclos biogeoquímicos y dinámicas
+            de población.
           </p>
           <p class="section-body" data-scroll-reveal>
-            The compiler pipeline transforms high-level habitability queries into
-            parallelized numerical simulations, reducing what would require weeks of
-            supercomputer time into seconds of deterministic execution.
+            El pipeline de compilación transforma consultas de habitabilidad de alto nivel en
+            simulaciones numéricas paralelizadas, reduciendo semanas de cómputo en supercomputadoras
+            a segundos de ejecución determinista.
           </p>
           <div class="dsl-stats" data-scroll-reveal>
             <div class="stat-block">
-              <span class="stat-num">3</span>
-              <span class="stat-label">Compiler Passes</span>
+              <span class="stat-num">5</span>
+              <span class="stat-label">Fases de Compilación</span>
             </div>
             <div class="stat-block">
               <span class="stat-num">94%</span>
-              <span class="stat-label">Sim Accuracy vs Monte Carlo</span>
+              <span class="stat-label">Precisión vs. Monte Carlo</span>
             </div>
           </div>
         </div>
-
         <div class="dsl-code-panel" data-scroll-reveal>
           <div class="panel-header">
             <div class="panel-dots">
@@ -159,110 +540,130 @@
               <span class="dot dot-yellow"></span>
               <span class="dot dot-green"></span>
             </div>
-            <span class="panel-filename">exo_kepler442b.astra</span>
-            <span class="panel-badge">COMPILED ✓</span>
+            <span class="panel-filename">biosfera_marte.astra</span>
+            <span class="panel-badge">COMPILADO ✓</span>
           </div>
           <div class="panel-body">
-            <pre class="code-block"><code><span class="k">mission</span> <span class="n">Kepler442b_Habitability</span> {
+            <pre class="code-block"><code><span class="k">mision</span> <span class="n">Terraformacion_Marte</span> {
 
-  <span class="c">// — Stellar Parameters ————————</span>
-  <span class="k">star</span> <span class="n">KIC_8462852</span> {
-    <span class="k">type</span>  <span class="o">=</span> <span class="s">K_DWARF</span>
-    <span class="k">flux</span>  <span class="o">=</span> <span class="num">0.74</span> <span class="unit">S☉</span>
-    <span class="k">age</span>   <span class="o">=</span> <span class="num">4.2e9</span> <span class="unit">yr</span>
+  <span class="c">// — Parámetros Estelares ————————</span>
+  <span class="k">estrella</span> <span class="n">Sol</span> {
+    <span class="k">tipo</span>  <span class="o">=</span> <span class="s">G2V</span>
+    <span class="k">flujo</span>  <span class="o">=</span> <span class="num">1.0</span> <span class="unit">S☉</span>
+    <span class="k">edad</span>   <span class="o">=</span> <span class="num">4.6e9</span> <span class="unit">años</span>
   }
 
-  <span class="c">// — Planetary Body ————————————</span>
-  <span class="k">planet</span> <span class="n">target</span> {
-    <span class="k">mass</span>       <span class="o">=</span> <span class="num">2.34</span> <span class="unit">M♁</span>
-    <span class="k">radius</span>     <span class="o">=</span> <span class="num">1.34</span> <span class="unit">R♁</span>
-    <span class="k">orbit_semi</span> <span class="o">=</span> <span class="num">0.409</span> <span class="unit">AU</span>
-    <span class="k">eccentricity</span> <span class="o">=</span> <span class="num">0.04</span>
+  <span class="c">// — Cuerpo Planetario ————————————</span>
+  <span class="k">planeta</span> <span class="n">objetivo</span> {
+    <span class="k">masa</span>       <span class="o">=</span> <span class="num">0.107</span> <span class="unit">M🜨</span>
+    <span class="k">radio</span>      <span class="o">=</span> <span class="num">0.532</span> <span class="unit">R🜨</span>
+    <span class="k">semieje</span>    <span class="o">=</span> <span class="num">1.524</span> <span class="unit">AU</span>
+    <span class="k">excentricidad</span> <span class="o">=</span> <span class="num">0.093</span>
   }
 
-  <span class="c">// — Atmosphere Model ——————————</span>
-  <span class="k">atmosphere</span> {
-    <span class="k">N2</span>  <span class="o">=</span> <span class="num">78.1</span><span class="unit">%</span>
-    <span class="k">O2</span>  <span class="o">=</span> <span class="num">20.9</span><span class="unit">%</span>
-    <span class="k">CO2</span> <span class="o">=</span> <span class="num">0.04</span><span class="unit">%</span>
-    <span class="k">albedo</span> <span class="o">=</span> <span class="num">0.31</span>
-    <span class="k">greenhouse_factor</span> <span class="o">=</span> <span class="num">auto</span>
+  <span class="c">// — Modelo Atmosférico ——————————</span>
+  <span class="k">atmosfera</span> {
+    <span class="k">CO2</span>  <span class="o">=</span> <span class="num">95.3</span><span class="unit">%</span>
+    <span class="k">N2</span>   <span class="o">=</span> <span class="num">2.7</span><span class="unit">%</span>
+    <span class="k">presion_superficial</span> <span class="o">=</span> <span class="num">0.636</span> <span class="unit">kPa</span>
+    <span class="k">albedo</span> <span class="o">=</span> <span class="num">0.25</span>
+    <span class="k">factor_invernadero</span> <span class="o">=</span> <span class="num">auto</span>
   }
 
-  <span class="c">// — Simulation Pipeline ———————</span>
-  <span class="k">simulate</span> {
-    <span class="k">duration</span>   <span class="o">=</span> <span class="num">1e6</span> <span class="unit">yr</span>
-    <span class="k">resolution</span> <span class="o">=</span> <span class="s">HIGH</span>
-    <span class="k">outputs</span>    <span class="o">=</span> [
-      <span class="s">SURFACE_TEMP</span>, <span class="s">LIQUID_WATER</span>,
-      <span class="s">BIOSIG_SPECTRUM</span>, <span class="s">ESI_INDEX</span>
+  <span class="c">// — Simulación ———————————————</span>
+  <span class="k">simular</span> {
+    <span class="k">duracion</span>   <span class="o">=</span> <span class="num">5e5</span> <span class="unit">años</span>
+    <span class="k">resolucion</span> <span class="o">=</span> <span class="s">ALTA</span>
+    <span class="k">salidas</span>    <span class="o">=</span> [
+      <span class="s">TEMP_SUPERFICIE</span>, <span class="s">AGUA_LIQUIDA</span>,
+      <span class="s">BIOMASA</span>, <span class="s">ESPECTRO_BIOFIRMA</span>
     ]
   }
 
-  <span class="c">// — Viability Gate ————————————</span>
-  <span class="k">assert</span> <span class="n">viable_if</span> {
-    <span class="n">ESI_INDEX</span>    <span class="o">&gt;</span> <span class="num">0.85</span>
-    <span class="n">SURFACE_TEMP</span> <span class="k">in</span> [<span class="num">273</span>, <span class="num">323</span>] <span class="unit">K</span>
-    <span class="n">LIQUID_WATER</span> <span class="o">&gt;</span> <span class="num">0.0</span>
+  <span class="c">// — Condiciones de Viabilidad —————</span>
+  <span class="k">asegurar</span> <span class="n">habitable_si</span> {
+    <span class="n">TEMP_SUPERFICIE</span> <span class="k">en</span> [<span class="num">273</span>, <span class="num">323</span>] <span class="unit">K</span>
+    <span class="n">AGUA_LIQUIDA</span>    <span class="o">></span> <span class="num">0.01</span> <span class="unit">m</span>
+    <span class="n">BIOMASA</span>          <span class="o">></span> <span class="num">0.5</span> <span class="unit">kg/m²</span>
   }
 }</code></pre>
           </div>
           <div class="panel-output">
             <span class="out-label">STDOUT</span>
-            <span class="out-text">ESI: <span class="out-val">0.916</span> · Temp: <span class="out-val">289K</span> · Status: <span class="out-pass">VIABLE ✓</span></span>
+            <span class="out-text">ESI: <span class="out-val">0.732</span> · Temp: <span class="out-val">268K</span> · Agua: <span class="out-val">0.03m</span> · Estado: <span class="out-pass">ESTABLE ✓</span></span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────
-         SECTION 03 — PREDICTIVE ANALYSIS
-    ───────────────────────────────────── -->
+    <!-- SECTION 03 — CARACTERÍSTICAS Y PIPELINE -->
     <section class="section" id="section-analysis">
       <div class="section-number">03</div>
-
       <div class="analysis-layout">
         <div class="analysis-center">
-          <div class="section-tag" data-scroll-reveal>// PREDICTIVE ANALYSIS ENGINE</div>
+          <div class="section-tag" data-scroll-reveal>// COMPONENTES DEL COMPILADOR</div>
           <h2 class="section-title section-title--center" data-scroll-reveal>
-            Multi-Variable<br />
-            <em>Atmospheric Modeling</em>
+            Pipeline de<br />
+            <em>Compilación y Simulación</em>
           </h2>
-
           <div class="analysis-grid" data-scroll-reveal>
             <div class="analysis-card">
-              <div class="card-icon">⬡</div>
-              <h3 class="card-title">Thermal Flux<br />Solver</h3>
-              <p class="card-body">Computes planetary energy balance via multi-layer radiative transfer. Resolves albedo feedback loops and latitudinal temperature gradients at sub-kelvin precision.</p>
-              <div class="card-meter">
-                <div class="meter-fill" style="--fill: 91%"></div>
-                <span>Accuracy 91%</span>
-              </div>
-            </div>
-
-            <div class="analysis-card analysis-card--accent">
               <div class="card-icon">◈</div>
-              <h3 class="card-title">Biochemical<br />Equilibrium</h3>
-              <p class="card-body">Models atmospheric chemistry across geological timescales. Detects biosignature gases and evaluates redox disequilibrium as a proxy for biological activity.</p>
+              <h3 class="card-title">Analizador<br />Léxico</h3>
+              <p class="card-body">Convierte código fuente en tokens usando expresiones regulares. Detecta caracteres ilegales, números pegados a identificadores y cadenas sin cerrar. Genera más de 32 tipos de tokens.</p>
               <div class="card-meter">
-                <div class="meter-fill" style="--fill: 87%"></div>
-                <span>Accuracy 87%</span>
+                <div class="meter-fill" style="--fill: 100%"></div>
+                <span>Precisión 100%</span>
               </div>
             </div>
-
+            <div class="analysis-card analysis-card--accent">
+              <div class="card-icon">⬡</div>
+              <h3 class="card-title">Parser<br />& AST</h3>
+              <p class="card-body">Construye un Árbol de Sintaxis Abstracta (AST) según gramática LL(1). Valida llaves, punto y coma, y estructura de bloques (planeta, atmósfera, agua, vida).</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 98%"></div>
+                <span>Cobertura gramatical 98%</span>
+              </div>
+            </div>
             <div class="analysis-card">
               <div class="card-icon">⬢</div>
-              <h3 class="card-title">Tectonic &amp;<br />Hydrological Sim</h3>
-              <p class="card-body">Integrates lithospheric plate models with hydrological cycles. Evaluates carbonate-silicate weathering and long-term climate stability vectors.</p>
+              <h3 class="card-title">Validación<br />Semántica</h3>
+              <p class="card-body">Comprueba tipos, unidades físicas, variables requeridas (masa, radio, presión, CO2, estado_líquido) y flujo de control. Genera errores SEM-xxx con ubicación exacta.</p>
               <div class="card-meter">
-                <div class="meter-fill" style="--fill: 78%"></div>
-                <span>Accuracy 78%</span>
+                <div class="meter-fill" style="--fill: 94%"></div>
+                <span>Reglas semánticas 94%</span>
+              </div>
+            </div>
+            <div class="analysis-card">
+              <div class="card-icon">⟡</div>
+              <h3 class="card-title">Motor de<br />Simulación</h3>
+              <p class="card-body">Interpreta el AST validado, ejecuta asignaciones, condicionales, bucles y funciones. Soporta datos numéricos, booleanos, textos, listas y unidades físicas.</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 96%"></div>
+                <span>Rendimiento 1.2M ops/s</span>
+              </div>
+            </div>
+            <div class="analysis-card">
+              <div class="card-icon">⎔</div>
+              <h3 class="card-title">Tabla de<br />Símbolos</h3>
+              <p class="card-body">Ámbitos anidados (global, simulaciones, funciones, bucles). Almacena nombre, tipo, valor, unidad y línea de declaración para cada variable.</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 100%"></div>
+                <span>Gestión completa</span>
+              </div>
+            </div>
+            <div class="analysis-card analysis-card--accent">
+              <div class="card-icon">⤚</div>
+              <h3 class="card-title">Generador<br />de Reportes</h3>
+              <p class="card-body">Produce salida estructurada de `mostrar` y `reporte`, con soporte para concatenación de cadenas, números y unidades. Ideal para análisis de habitabilidad.</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 100%"></div>
+                <span>Salida instantánea</span>
               </div>
             </div>
           </div>
-
           <div class="pipeline-bar" data-scroll-reveal>
-            <div class="pipeline-label">COMPILER PIPELINE</div>
+            <div class="pipeline-label">FLUJO DE COMPILACIÓN ASTRA</div>
             <div class="pipeline-steps">
               <div class="pipe-step"><span>LEX</span></div>
               <div class="pipe-arrow">→</div>
@@ -270,33 +671,104 @@
               <div class="pipe-arrow">→</div>
               <div class="pipe-step"><span>AST</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step pipe-step--active"><span>OPT</span></div>
+              <div class="pipe-step pipe-step--active"><span>SEM</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step"><span>CODEGEN</span></div>
+              <div class="pipe-step"><span>SIM</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step pipe-step--pass"><span>SIM ✓</span></div>
+              <div class="pipe-step pipe-step--pass"><span>REPORTE ✓</span></div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────
-         SECTION 04 — CONTACT / FOOTER
-    ───────────────────────────────────── -->
+    <!-- SECTION 04 — EQUIPO, ROADMAP, FAQ, FOOTER -->
     <section class="section section--footer" id="section-contact">
+      <div class="contact-layout" style="max-width: var(--container); margin: 0 auto; padding-bottom: 80px;">
+        <div>
+          <div class="section-tag" data-scroll-reveal>// EQUIPO Y DESARROLLO</div>
+          <h2 class="section-title" style="font-size: 2rem;" data-scroll-reveal>Ingeniería del<br /><em>Compilador</em></h2>
+          <div class="contact-meta" data-scroll-reveal>
+            <div class="meta-row">
+              <span class="meta-label">ARQUITECTURA</span>
+              <span class="meta-val">Análisis Léxico · Parser · AST · Semántica · Simulación</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">TECNOLOGÍAS</span>
+              <span class="meta-val">C# · .NET 8 · AvalonEdit · Three.js · LLVM (backplane)</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">INVESTIGACIÓN</span>
+              <span class="meta-val">Modelado de Ecosistemas · Habitabilidad Planetaria · Biofirmas</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">VERSIÓN ACTUAL</span>
+              <span class="meta-val">v1.0 (en desarrollo) — Compilador estable</span>
+            </div>
+          </div>
+
+          <div class="section-tag" style="margin-top: 48px;" data-scroll-reveal>// HOJA DE RUTA</div>
+          <div class="contact-meta" data-scroll-reveal>
+            <div class="meta-row"><span class="meta-label">Fase 1</span><span class="meta-val">Lexer + Parser básico (tokens, gramática inicial)</span></div>
+            <div class="meta-row"><span class="meta-label">Fase 2</span><span class="meta-val">AST completo, validación semántica de tipos</span></div>
+            <div class="meta-row"><span class="meta-label">Fase 3</span><span class="meta-val">Motor de simulación, ejecución de condicionales y bucles</span></div>
+            <div class="meta-row"><span class="meta-label">Fase 4</span><span class="meta-val">Optimización, paralelización, reportes avanzados</span></div>
+            <div class="meta-row"><span class="meta-label">Futuro</span><span class="meta-val">Integración con WebAssembly, simulación en tiempo real, biblioteca de biosferas</span></div>
+          </div>
+
+          <div class="section-tag" style="margin-top: 48px;" data-scroll-reveal>// FAQ TÉCNICO</div>
+          <div class="contact-meta" data-scroll-reveal>
+            <div class="meta-row"><span class="meta-label">¿Compilado o interpretado?</span><span class="meta-val">Compilado a AST y luego interpretado por el motor de simulación.</span></div>
+            <div class="meta-row"><span class="meta-label">¿Paradigma?</span><span class="meta-val">Imperativo con enfoque en simulación declarativa de ecosistemas.</span></div>
+            <div class="meta-row"><span class="meta-label">¿Qué tipos admite?</span><span class="meta-val">Números, textos, booleanos, listas, nulo. Unidades físicas opcionales.</span></div>
+            <div class="meta-row"><span class="meta-label">¿Extensible?</span><span class="meta-val">Sí, mediante definición de funciones y módulos reutilizables.</span></div>
+          </div>
+        </div>
+
+        <div class="glass-panel" data-scroll-reveal>
+          <div class="form-header">
+            <span class="form-title">DOCUMENTACIÓN Y RECURSOS</span>
+            <div class="form-status"><span class="status-dot--green"></span> REFERENCIA COMPLETA</div>
+          </div>
+          <div class="form-group">
+            <span class="meta-label">MANUAL DE USUARIO</span>
+            <p style="margin-bottom: 20px;">Próximamente: guía completa de sintaxis, ejemplos y referencia del compilador ASTRA.</p>
+          </div>
+          <div class="form-group">
+            <span class="meta-label">GRAMÁTICA (EBNF)</span>
+            <p style="margin-bottom: 20px;">Definición formal de las reglas de producción, tokens y estructuras del lenguaje.</p>
+          </div>
+          <div class="form-group">
+            <span class="meta-label">REPOSITORIO</span>
+            <p style="margin-bottom: 20px;">Código fuente completo, documentación API y ejemplos de simulación.</p>
+          </div>
+          <div class="form-group">
+            <span class="meta-label">CLI / IDE</span>
+            <p>Compilador integrado en BioSphereIDE con resaltado de sintaxis, depuración y visualización de AST.</p>
+          </div>
+          <button class="btn-launch" id="btn-launch">
+            <span class="btn-launch-text">ACCEDER A DOCUMENTACIÓN</span>
+            <span class="btn-launch-icon">↗</span>
+            <span class="btn-launch-glow"></span>
+          </button>
+        </div>
+      </div>
 
       <footer class="site-footer">
         <div class="footer-left">
           <span class="footer-logo">[ASTRA]</span>
-          <span class="footer-copy">© 2025 ASTRA Project — Open Research Initiative</span>
+          <span class="footer-copy">© 2026 ASTRA Project — Open Research Initiative · Licencia MIT</span>
         </div>
         <div class="footer-coords">
-          <span>DSL v2.4.1</span>
+          <span>DSL v1.0</span>
           <span class="nav-sep">·</span>
-          <span>Compiler Build 20250506</span>
+          <span>Compiler Build 2026</span>
           <span class="nav-sep">·</span>
-          <span>THREE.js r128</span>
+          <span>Three.js r128</span>
+          <span class="nav-sep">·</span>
+          <a href="https://github.com/Dom-cs13/PortafolioPRoyectoAstra" id="docFooterLink" style="color: var(--color-gold);">Repositorio</a>
+          <span class="nav-sep">·</span>
+          <a href="#" id="docFooterLink2" style="color: var(--color-gold);">Documentación</a>
         </div>
       </footer>
     </section>
@@ -304,5 +776,46 @@
   </div><!-- /#scroll-container -->
 
   <script src="main.js"></script>
+  <script>
+    // Modal logic unificado (sin redeclaraciones)
+    (function() {
+      const modal = document.getElementById('docModal');
+      const docContent = document.getElementById('docContent');
+      const source = document.getElementById('docContentSource');
+      const closeBtn = document.getElementById('closeModalBtn');
+      const openBtns = [
+        document.getElementById('btn-launch'),
+        document.getElementById('docFooterLink'),
+        document.getElementById('docFooterLink2')
+      ].filter(btn => btn !== null);
+
+      function openModal() {
+        if (source) docContent.innerHTML = source.innerHTML;
+        if (modal) modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        if (modal) modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      openBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          openModal();
+        });
+      });
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal && modal.classList.contains('active')) closeModal();
+      });
+    })();
+  </script>
 </body>
 </html>

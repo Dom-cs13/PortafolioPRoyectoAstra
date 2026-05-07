@@ -37,7 +37,7 @@ function initNav() {
 ──────────────────────────────────────────────────────────── */
 function initTelemetryCounter() {
   const el = document.getElementById('telem-targets');
-  const target = 5329;
+  const target = 12400;
   let current = 0;
 
   const tick = () => {
@@ -68,7 +68,7 @@ function initCoords() {
     const ra_s  = Math.floor((t * 3600) % 60);
     const dec_d = Math.floor(Math.abs(Math.sin(t * 0.2) * 45));
     const dec_m = Math.floor((t * 120) % 60);
-    raEl.textContent  = `RA ${String(ra_h).padStart(2,'0')}h ${String(ra_m).padStart(2,'0')}m ${String(ra_s).padStart(2,'0')}s`;
+    raEl.textContent  = `AR ${String(ra_h).padStart(2,'0')}h ${String(ra_m).padStart(2,'0')}m ${String(ra_s).padStart(2,'0')}s`;
     decEl.textContent = `DEC +${String(dec_d).padStart(2,'0')}° ${String(dec_m).padStart(2,'0')}′`;
   }, 80);
 }
@@ -481,7 +481,7 @@ function initScrollReveal() {
 }
 
 /* ──────────────────────────────────────────────────────────
-   9. LAUNCH BUTTON INTERACTION
+   9. LAUNCH BUTTON INTERACTION (placeholder)
 ──────────────────────────────────────────────────────────── */
 function initLaunchButton() {
   const btn = document.getElementById('btn-launch');
