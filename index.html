@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTRA — Advanced Simulation & Terrain Rendering Architecture</title>
+  <meta name="description" content="ASTRA: A Domain-Specific Language and Compiler for Exoplanet Habitability Simulation." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       CANVAS — Three.js Fixed Background
+  ═══════════════════════════════════════ -->
+  <canvas id="astra-canvas"></canvas>
+
+  <!-- ═══════════════════════════════════════
+       CURSOR (Removed)
+  ═══════════════════════════════════════ -->
+
+  <!-- ═══════════════════════════════════════
+       NAV
+  ═══════════════════════════════════════ -->
+  <nav id="nav">
+    <div class="nav-logo">
+      <span class="nav-logo-bracket">[</span>
+      <span class="nav-logo-text">ASTRA</span>
+      <span class="nav-logo-bracket">]</span>
+    </div>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span class="status-text">SYSTEM NOMINAL</span>
+    </div>
+    <div class="nav-coords">
+      <span id="nav-ra">RA 00h 00m 00s</span>
+      <span class="nav-sep">·</span>
+      <span id="nav-dec">DEC +00° 00′</span>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════
+       SCROLL CONTAINER
+  ═══════════════════════════════════════ -->
+  <div id="scroll-container">
+
+    <!-- ─────────────────────────────────────
+         SECTION 01 — HERO
+    ───────────────────────────────────── -->
+    <section class="section" id="section-hero">
+      <div class="hero-content">
+        <div class="hero-label" data-reveal>
+          <span class="label-line"></span>
+          <span>MISSION BRIEF — DSL v2.4.1</span>
+          <span class="label-line"></span>
+        </div>
+
+        <h1 class="hero-title" data-reveal>
+          <span class="title-line" id="title-astra">ASTRA</span>
+        </h1>
+
+        <p class="hero-subtitle" data-reveal>
+          Advanced Simulation &amp; Terrain<br />
+          Rendering Architecture
+        </p>
+
+        <p class="hero-desc" data-reveal>
+          A domain‑specific language and optimizing compiler engineered<br />
+          for the precise simulation of exoplanetary environments<br />
+          and the determination of viable conditions for life.
+        </p>
+
+        <div class="hero-cta" data-reveal>
+          <a href="#section-dsl" class="btn-primary">
+            <span class="btn-inner">Initialize Sequence</span>
+            <span class="btn-glow"></span>
+          </a>
+          <a href="#section-analysis" class="btn-ghost">View Architecture</a>
+        </div>
+
+        <div class="hero-telemetry" data-reveal>
+          <div class="telem-item">
+            <span class="telem-label">TARGETS ANALYZED</span>
+            <span class="telem-value" id="telem-targets">5,329</span>
+          </div>
+          <div class="telem-divider"></div>
+          <div class="telem-item">
+            <span class="telem-label">VIABLE CANDIDATES</span>
+            <span class="telem-value">47</span>
+          </div>
+          <div class="telem-divider"></div>
+          <div class="telem-item">
+            <span class="telem-label">COMPILER OPS/s</span>
+            <span class="telem-value">1.2M</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scroll-indicator">
+        <div class="scroll-line"></div>
+        <span>SCROLL</span>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────
+         SECTION 02 — DSL ENGINE
+    ───────────────────────────────────── -->
+    <section class="section" id="section-dsl">
+      <div class="section-number">02</div>
+
+      <div class="dsl-layout">
+        <div class="dsl-text-col">
+          <div class="section-tag" data-scroll-reveal>// THE ENGINE</div>
+          <h2 class="section-title" data-scroll-reveal>
+            A Language<br />
+            <em>Born From</em><br />
+            The Cosmos
+          </h2>
+          <p class="section-body" data-scroll-reveal>
+            ASTRA is not a framework built on top of existing tools. It is a purpose-built
+            domain-specific language with its own lexer, parser, and multi-pass optimizing
+            compiler. Every syntactic construct maps directly to a physical simulation
+            primitive — atmospheric pressure gradients, stellar flux calculations,
+            biochemical equilibrium states.
+          </p>
+          <p class="section-body" data-scroll-reveal>
+            The compiler pipeline transforms high-level habitability queries into
+            parallelized numerical simulations, reducing what would require weeks of
+            supercomputer time into seconds of deterministic execution.
+          </p>
+          <div class="dsl-stats" data-scroll-reveal>
+            <div class="stat-block">
+              <span class="stat-num">3</span>
+              <span class="stat-label">Compiler Passes</span>
+            </div>
+            <div class="stat-block">
+              <span class="stat-num">94%</span>
+              <span class="stat-label">Sim Accuracy vs Monte Carlo</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsl-code-panel" data-scroll-reveal>
+          <div class="panel-header">
+            <div class="panel-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="panel-filename">exo_kepler442b.astra</span>
+            <span class="panel-badge">COMPILED ✓</span>
+          </div>
+          <div class="panel-body">
+            <pre class="code-block"><code><span class="k">mission</span> <span class="n">Kepler442b_Habitability</span> {
+
+  <span class="c">// — Stellar Parameters ————————</span>
+  <span class="k">star</span> <span class="n">KIC_8462852</span> {
+    <span class="k">type</span>  <span class="o">=</span> <span class="s">K_DWARF</span>
+    <span class="k">flux</span>  <span class="o">=</span> <span class="num">0.74</span> <span class="unit">S☉</span>
+    <span class="k">age</span>   <span class="o">=</span> <span class="num">4.2e9</span> <span class="unit">yr</span>
+  }
+
+  <span class="c">// — Planetary Body ————————————</span>
+  <span class="k">planet</span> <span class="n">target</span> {
+    <span class="k">mass</span>       <span class="o">=</span> <span class="num">2.34</span> <span class="unit">M♁</span>
+    <span class="k">radius</span>     <span class="o">=</span> <span class="num">1.34</span> <span class="unit">R♁</span>
+    <span class="k">orbit_semi</span> <span class="o">=</span> <span class="num">0.409</span> <span class="unit">AU</span>
+    <span class="k">eccentricity</span> <span class="o">=</span> <span class="num">0.04</span>
+  }
+
+  <span class="c">// — Atmosphere Model ——————————</span>
+  <span class="k">atmosphere</span> {
+    <span class="k">N2</span>  <span class="o">=</span> <span class="num">78.1</span><span class="unit">%</span>
+    <span class="k">O2</span>  <span class="o">=</span> <span class="num">20.9</span><span class="unit">%</span>
+    <span class="k">CO2</span> <span class="o">=</span> <span class="num">0.04</span><span class="unit">%</span>
+    <span class="k">albedo</span> <span class="o">=</span> <span class="num">0.31</span>
+    <span class="k">greenhouse_factor</span> <span class="o">=</span> <span class="num">auto</span>
+  }
+
+  <span class="c">// — Simulation Pipeline ———————</span>
+  <span class="k">simulate</span> {
+    <span class="k">duration</span>   <span class="o">=</span> <span class="num">1e6</span> <span class="unit">yr</span>
+    <span class="k">resolution</span> <span class="o">=</span> <span class="s">HIGH</span>
+    <span class="k">outputs</span>    <span class="o">=</span> [
+      <span class="s">SURFACE_TEMP</span>, <span class="s">LIQUID_WATER</span>,
+      <span class="s">BIOSIG_SPECTRUM</span>, <span class="s">ESI_INDEX</span>
+    ]
+  }
+
+  <span class="c">// — Viability Gate ————————————</span>
+  <span class="k">assert</span> <span class="n">viable_if</span> {
+    <span class="n">ESI_INDEX</span>    <span class="o">&gt;</span> <span class="num">0.85</span>
+    <span class="n">SURFACE_TEMP</span> <span class="k">in</span> [<span class="num">273</span>, <span class="num">323</span>] <span class="unit">K</span>
+    <span class="n">LIQUID_WATER</span> <span class="o">&gt;</span> <span class="num">0.0</span>
+  }
+}</code></pre>
+          </div>
+          <div class="panel-output">
+            <span class="out-label">STDOUT</span>
+            <span class="out-text">ESI: <span class="out-val">0.916</span> · Temp: <span class="out-val">289K</span> · Status: <span class="out-pass">VIABLE ✓</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────
+         SECTION 03 — PREDICTIVE ANALYSIS
+    ───────────────────────────────────── -->
+    <section class="section" id="section-analysis">
+      <div class="section-number">03</div>
+
+      <div class="analysis-layout">
+        <div class="analysis-center">
+          <div class="section-tag" data-scroll-reveal>// PREDICTIVE ANALYSIS ENGINE</div>
+          <h2 class="section-title section-title--center" data-scroll-reveal>
+            Multi-Variable<br />
+            <em>Atmospheric Modeling</em>
+          </h2>
+
+          <div class="analysis-grid" data-scroll-reveal>
+            <div class="analysis-card">
+              <div class="card-icon">⬡</div>
+              <h3 class="card-title">Thermal Flux<br />Solver</h3>
+              <p class="card-body">Computes planetary energy balance via multi-layer radiative transfer. Resolves albedo feedback loops and latitudinal temperature gradients at sub-kelvin precision.</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 91%"></div>
+                <span>Accuracy 91%</span>
+              </div>
+            </div>
+
+            <div class="analysis-card analysis-card--accent">
+              <div class="card-icon">◈</div>
+              <h3 class="card-title">Biochemical<br />Equilibrium</h3>
+              <p class="card-body">Models atmospheric chemistry across geological timescales. Detects biosignature gases and evaluates redox disequilibrium as a proxy for biological activity.</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 87%"></div>
+                <span>Accuracy 87%</span>
+              </div>
+            </div>
+
+            <div class="analysis-card">
+              <div class="card-icon">⬢</div>
+              <h3 class="card-title">Tectonic &amp;<br />Hydrological Sim</h3>
+              <p class="card-body">Integrates lithospheric plate models with hydrological cycles. Evaluates carbonate-silicate weathering and long-term climate stability vectors.</p>
+              <div class="card-meter">
+                <div class="meter-fill" style="--fill: 78%"></div>
+                <span>Accuracy 78%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-bar" data-scroll-reveal>
+            <div class="pipeline-label">COMPILER PIPELINE</div>
+            <div class="pipeline-steps">
+              <div class="pipe-step"><span>LEX</span></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step"><span>PARSE</span></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step"><span>AST</span></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step pipe-step--active"><span>OPT</span></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step"><span>CODEGEN</span></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step pipe-step--pass"><span>SIM ✓</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────
+         SECTION 04 — CONTACT / FOOTER
+    ───────────────────────────────────── -->
+    <section class="section section--footer" id="section-contact">
+
+      <footer class="site-footer">
+        <div class="footer-left">
+          <span class="footer-logo">[ASTRA]</span>
+          <span class="footer-copy">© 2025 ASTRA Project — Open Research Initiative</span>
+        </div>
+        <div class="footer-coords">
+          <span>DSL v2.4.1</span>
+          <span class="nav-sep">·</span>
+          <span>Compiler Build 20250506</span>
+          <span class="nav-sep">·</span>
+          <span>THREE.js r128</span>
+        </div>
+      </footer>
+    </section>
+
+  </div><!-- /#scroll-container -->
+
+  <script src="main.js"></script>
+</body>
+</html>
