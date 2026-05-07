@@ -1,4 +1,4 @@
-# ASTRA | Advanced Simulation & Terrain Rendering
+# ASTRA | Advanced Simulation
 
 Este repositorio presenta el **BioSphere IDE**, el entorno visual interactivo diseñado para el motor de simulación ASTRA. 
 
