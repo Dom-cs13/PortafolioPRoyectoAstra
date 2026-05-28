@@ -336,29 +336,37 @@ booleano         = "verdadero" | "falso" ;
     </ul>
     
     <h3>5.3 Analizador semántico</h3>
-    <p>Esta fase recorre el AST y aplica reglas semánticas para garantizar la coherencia del programa. Incluye:</p>
+    <p>Esta fase recorre el AST y aplica reglas semánticas robustas para garantizar la total coherencia física e informática del programa. Incluye:</p>
     <ul>
-      <li><strong>Tabla de símbolos</strong>: gestiona ámbitos anidados (global, simulacion, if, while, función). Cada símbolo almacena: nombre, tipo (numero, texto, booleano, lista, nulo, funcion), valor, unidad (opcional), línea de declaración y ámbito.</li>
-      <li><strong>Verificación de variables no declaradas</strong>: no se puede usar un identificador sin antes asignarle un valor (error SEM-001).</li>
-      <li><strong>Compatibilidad de tipos</strong>: se comprueba que las operaciones respeten los tipos (no sumar texto con número).</li>
-      <li><strong>Unidades físicas</strong>: en suma/resta las unidades deben coincidir; el exponente de una potencia no puede tener unidad.</li>
-      <li><strong>Variables obligatorias</strong>: dentro de <code>planeta</code> deben declararse <code>masa</code> y <code>radio</code>; en <code>atmosfera</code>, <code>presion</code> y <code>co2</code>; en <code>agua</code>, <code>estado_liquido</code>. Si falta alguna, se reporta error SEM-040 o SEM-041.</li>
-      <li><strong>Coherencia en condiciones</strong>: los operadores relacionales (<code>&lt;</code>, <code>&gt;</code>, etc.) solo se permiten entre números. Los operadores lógicos <code>y</code>/<code>o</code> requieren operandos booleanos.</li>
-      <li><strong>Funciones</strong>: se comprueba que la función esté definida antes de ser llamada y que el número de argumentos coincida con los parámetros declarados.</li>
+      <li><strong>Tabla de Símbolos de Ámbitos Anidados</strong>: Se implementa a través de una pila de ámbitos (scopes stack). Cada bloque de código (simulacion, planeta, if, mientras, funciones) crea un nivel de ámbito local que hereda y sobreescribe variables de los ámbitos ancestros. Cada símbolo almacena su nombre, tipo estricto, valor, ámbito, línea de declaración y unidad física.</li>
+      <li><strong>Detección de Variables No Declaradas</strong>: No se permite el uso de ningún identificador que no haya sido inicializado previamente en un ámbito accesible (error <code>SEM-001</code>).</li>
+      <li><strong>Inferencia y Compatibilidad de Tipos</strong>: Verifica la compatibilidad en operaciones relacionales y aritméticas (por ejemplo, prohibiendo sumas de cadenas de texto con números decimales, <code>SEM-014</code>).</li>
+      <li><strong>Validación estricta de Unidades Físicas</strong>: Admite unidades opcionales como <code>km, m, kg, atm, ppm, °C, h, s, M🜨, R🜨, AU</code>. El analizador semántico valida que las operaciones aritméticas de suma y resta se realicen únicamente entre variables con unidades compatibles (error <code>SEM-030</code>) y que los exponentes en potencias carezcan de unidad (error <code>SEM-031</code>).</li>
+      <li><strong>Variables Obligatorias por Bloque</strong>: El validador exige la presencia de variables físicas requeridas para inicializar el simulador:
+        <ul>
+          <li><strong>planeta</strong> requiere: <code>masa</code> (numérica) y <code>radio</code> (numérica) (error <code>SEM-041</code>).</li>
+          <li><strong>atmosfera</strong> requiere: <code>presion</code> (numérica) y <code>co2</code> (numérica) (error <code>SEM-041</code>).</li>
+          <li><strong>agua</strong> requiere: <code>estado_liquido</code> (booleana) (error <code>SEM-041</code>).</li>
+        </ul>
+      </li>
+      <li><strong>Verificación de Funciones</strong>: Comprueba firmas de funciones, asegurando que las llamadas coincidan con el número exacto de argumentos y rechazando definiciones duplicadas (error <code>SEM-002</code>).</li>
     </ul>
-    <p>Códigos de error semántico comunes:</p>
-    <ul>
-      <li><strong>SEM-001</strong>: Variable no inicializada</li>
-      <li><strong>SEM-002</strong>: Función no definida</li>
-      <li><strong>SEM-010</strong>: Operador requiere tipos numéricos</li>
-      <li><strong>SEM-011</strong>: Operador relacional requiere tipos numéricos</li>
-      <li><strong>SEM-014</strong>: Incompatibilidad de tipos en asignación</li>
-      <li><strong>SEM-020</strong>: Condición debe resultar booleana</li>
-      <li><strong>SEM-030</strong>: Unidades incompatibles en suma/resta</li>
-      <li><strong>SEM-031</strong>: Exponente con unidad física inválida</li>
-      <li><strong>SEM-040</strong>: Bloque obligatorio faltante</li>
-      <li><strong>SEM-041</strong>: Variable requerida faltante en bloque</li>
-    </ul>
+    <p>Códigos de error semántico de ASTRA DSL:</p>
+    <table>
+      <thead><tr><th>Código</th><th>Definición</th><th>Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SEM-001</strong></td><td>Variable no declarada en el ámbito</td><td><code>x = y + 5; // y no existe</code></td></tr>
+        <tr><td><strong>SEM-002</strong></td><td>Función no definida en el programa</td><td><code>simular(5); // simular no declarada</code></td></tr>
+        <tr><td><strong>SEM-010</strong></td><td>Operador aritmético requiere operandos numéricos</td><td><code>"Hola" * 2;</code></td></tr>
+        <tr><td><strong>SEM-011</strong></td><td>Operador relacional requiere operandos numéricos</td><td><code>si ("Marte" > 50) { ... }</code></td></tr>
+        <tr><td><strong>SEM-014</strong></td><td>Asignación incompatible de tipos</td><td><code>radio = verdadero; // radio es número</code></td></tr>
+        <tr><td><strong>SEM-020</strong></td><td>Condición de bucle/si no es booleana</td><td><code>si (50 km) { ... }</code></td></tr>
+        <tr><td><strong>SEM-030</strong></td><td>Unidades incompatibles en suma/resta</td><td><code>temp = 25 °C + 10 kg;</code></td></tr>
+        <tr><td><strong>SEM-031</strong></td><td>Exponente con unidad física no permitida</td><td><code>x = radio ^ (2 m);</code></td></tr>
+        <tr><td><strong>SEM-040</strong></td><td>Bloque de definición obligatorio faltante</td><td><code>Falta bloque 'atmosfera'</code></td></tr>
+        <tr><td><strong>SEM-041</strong></td><td>Variable requerida faltante dentro de un bloque</td><td><code>Falta 'radio' en bloque 'planeta'</code></td></tr>
+      </tbody>
+    </table>
     
     <h3>5.4 Tabla de símbolos (estructura)</h3>
     <p>La tabla de símbolos se implementa con una pila de ámbitos. Cada ámbito es un diccionario nombre → símbolo. Las operaciones principales:</p>
@@ -371,57 +379,57 @@ booleano         = "verdadero" | "falso" ;
     </ul>
     <p>La información almacenada permite la verificación semántica y es utilizada durante la ejecución para obtener valores de variables.</p>
     
-    <h3>5.5 Ejecución / simulación</h3>
-    <p>Una vez superadas todas las fases, el compilador interpreta el AST. El motor de simulación recorre el árbol ejecutando las sentencias en orden: asignaciones, condicionales, bucles, funciones, mostrar y reporte. Soporta operaciones aritméticas, lógicas y de comparación, así como manipulación básica de listas.</p>
+    <h3>5.5 Ejecución / simulación (Intérprete)</h3>
+    <p>Una vez superadas todas las fases de compilación estática, el motor de ASTRA ejecuta el código fuente a través del Intérprete. Este recorre el árbol sintáctico (AST) validado ejecutando sentencias lineales, resolviendo asignaciones, bifurcaciones condicionales (<code>si</code>/<code>sino</code>), bucles iterativos (<code>mientras</code>), invocaciones de funciones locales y comandos de salida (<code>mostrar</code> y <code>reporte</code>) para emitir resultados lógicos y físicos.</p>
     
     <h2>6. Ejemplos completos</h2>
     <h3>Ejemplo 1: Simulación básica con condicional</h3>
     <pre>inicio
-    simulacion {
-        planeta { masa = 1000 kg; radio = 100 km; }
-        atmosfera { presion = 0.5 atm; co2 = 800 ppm; }
-        agua { estado_liquido = falso; }
-        vida {
-            temperatura = 30;
-            si (temperatura > 25) {
-                mostrar("Alerta: temperatura alta");
-            }
-            reporte("Condiciones extremas");
+simulacion {
+    planeta { masa = 1000 kg; radio = 100 km; }
+    atmosfera { presion = 0.5 atm; co2 = 800 ppm; }
+    agua { estado_liquido = falso; }
+    vida {
+        temperatura = 30;
+        si (temperatura > 25) {
+            mostrar("Alerta: temperatura alta");
         }
+        reporte("Condiciones extremas");
     }
+}
 fin</pre>
     
     <h3>Ejemplo 2: Función y bucle</h3>
     <pre>inicio
-    simulacion {
-        planeta { masa = 1.0 kg; radio = 1.0 km; }
-        atmosfera { presion = 1.0 atm; co2 = 300 ppm; }
-        agua { estado_liquido = verdadero; }
-        vida {
-            funcion cuadrado(x) {
-                retorno = x * x;
-            }
-            contador = 0;
-            mientras (contador < 5) {
-                mostrar(cuadrado(contador));
-                contador = contador + 1;
-            }
+simulacion {
+    planeta { masa = 1.0 kg; radio = 1.0 km; }
+    atmosfera { presion = 1.0 atm; co2 = 300 ppm; }
+    agua { estado_liquido = verdadero; }
+    vida {
+        funcion cuadrado(x) {
+            retorno = x * x;
+        }
+        contador = 0;
+        mientras (contador < 5) {
+            mostrar(cuadrado(contador));
+            contador = contador + 1;
         }
     }
+}
 fin</pre>
     
     <h3>Ejemplo 3: Listas y unidades</h3>
     <pre>inicio
-    simulacion {
-        planeta { masa = 5.97e24 kg; radio = 6371 km; }
-        atmosfera { presion = 1.0 atm; co2 = 400 ppm; }
-        agua { estado_liquido = verdadero; }
-        vida {
-            temperaturas = [15, 20, 25] °C;
-            promedio = (temperaturas[0] + temperaturas[1] + temperaturas[2]) / 3;
-            mostrar("Promedio: ", promedio, "°C");
-        }
+simulacion {
+    planeta { masa = 5.97e24 kg; radio = 6371 km; }
+    atmosfera { presion = 1.0 atm; co2 = 400 ppm; }
+    agua { estado_liquido = verdadero; }
+    vida {
+        temperaturas = [15, 20, 25] °C;
+        promedio = (temperaturas[0] + temperaturas[1] + temperaturas[2]) / 3;
+        mostrar("Promedio: ", promedio, "°C");
     }
+}
 fin</pre>
     
     <h2>7. Uso del IDE (BioSphereIDE)</h2>
@@ -435,15 +443,52 @@ fin</pre>
     
     <h2>8. Hoja de ruta y estado del proyecto</h2>
     <ul>
-      <li><strong>Fase 1 (completada)</strong>: Lexer + Parser básico</li>
-      <li><strong>Fase 2 (completada)</strong>: Validación semántica y tabla de símbolos</li>
-      <li><strong>Fase 3 (en desarrollo)</strong>: Motor de simulación completo</li>
-      <li><strong>Fase 4 (planificada)</strong>: Optimización y paralelización</li>
-      <li><strong>Futuro</strong>: WebAssembly, simulación en tiempo real</li>
+      <li><strong>Fase 1 (completada)</strong>: Lexer + Parser básico (tokens, gramática inicial)</li>
+      <li><strong>Fase 2 (completada)</strong>: AST completo, validación semántica de tipos y ámbitos</li>
+      <li><strong>Fase 3 (completada)</strong>: Conexión asíncrona JSON con el motor de renderizado 3D (Godot 4) e incrustación P/Invoke del simulador</li>
+      <li><strong>Fase 4 (en desarrollo)</strong>: Paralelización del motor de simulación y generación de compilado optimizado de bytecode</li>
+      <li><strong>Futuro</strong>: Biblioteca web para compilación y render en WebAssembly</li>
     </ul>
     
     <h2>9. Repositorio y contribuciones</h2>
-    <p>El código fuente completo está disponible en GitHub. Incluye Lexer.cs, Parser.cs, Semantico.cs y el IDE.</p>
+    <p>El código fuente completo está disponible en GitHub. Incluye Lexer.cs, Parser.cs, Semantico.cs, GodotEmbedder.cs y el IDE.</p>
+
+    <h2>10. Conexión en tiempo real con Godot 4 y Shaders en la GPU</h2>
+    <p>El compilador ASTRA implementa una integración en tiempo real sumamente potente y única con el motor gráfico <strong>Godot 4</strong>, permitiendo visualizar los mundos simulados en 3D interactivo al instante tras cada compilación exitosa en el <strong>BioSphereIDE</strong>.</p>
+    
+    <h3>10.1 Incrustación de Ventana (Win32 P/Invoke)</h3>
+    <p>El IDE desarrollado en C# / Windows Forms aprovecha llamadas nativas de la API de Windows mediante interoperabilidad (P/Invoke) para incrustar el visualizador 3D dentro de su propio panel de simulación de forma transparente:</p>
+    <ul>
+      <li><code>SetParent</code>: Reparenta la ventana de Godot (<code>visualizador_astra.exe</code>) para que sea hija del panel del IDE.</li>
+      <li><code>SetWindowLong</code> con <code>GWL_STYLE</code>: Quita dinámicamente los bordes nativos, la barra de título (<code>WS_CAPTION</code>), el borde grueso de redimensionamiento (<code>WS_THICKFRAME</code>) y los menús para lograr una apariencia integrada e impecable.</li>
+      <li><code>MoveWindow</code>: Modifica el tamaño y posición de la ventana del simulador para ajustarse al 100% del contenedor de Windows Forms, reaccionando en tiempo real al evento <code>Resize</code> del panel.</li>
+    </ul>
+    
+    <h3>10.2 Sincronización JSON y FileSystemWatcher</h3>
+    <p>La comunicación de parámetros físicos y astrobiológicos se realiza de forma asíncrona e instantánea:</p>
+    <ol>
+      <li><strong>Filtro DTO (Data Transfer Object):</strong> En C#, la clase <code>PlanetaParametros</code> mapea las variables extraídas del bloque <code>planeta</code>, <code>atmosfera</code>, y <code>agua</code> en el AST compilado.</li>
+      <li><strong>Escritura Temp:</strong> Tras una compilación libre de errores, el IDE serializa este objeto a JSON y lo guarda en <code>%TEMP%\astra_planeta.json</code>.</li>
+      <li><strong>Recepción en Godot:</strong> El script de Godot <code>astra_watcher.gd</code> contiene un monitor de cambios de archivo. Al notar el cambio en el archivo JSON, lee y parsea los parámetros y actualiza directamente las propiedades expuestas (<code>@export</code>) en el nodo <code>Planet</code> en tiempo de ejecución.</li>
+    </ol>
+
+    <h3>10.3 Renderizado Procedural en Shaders de GPU</h3>
+    <p>Una vez asignados los parámetros al planeta, Godot propaga las variables físicas a tres Shaders personalizados programados en GLSL/GDScript de forma instantánea:</p>
+    <ul>
+      <li><strong>Shader de Terreno (<code>terrain.gdshader</code>):</strong> Utiliza algoritmos de ruido procedural (Fractional Brownian Motion - FBM) para modelar montañas, cordilleras y valles. Si la <code>tectonic_activity</code> supera 0.7 y la <code>planet_temp</code> supera los 100°C, calcula fallas tectónicas iluminadas mediante emisión de luz que simulan magma incandescente. Si hay hierro (<code>composition_iron > 0.5</code>), el terreno adquiere texturas oscuras y rojizas de óxido basáltico y mayor especularidad.</li>
+      <li><strong>Shader Atmosférico y Rayleigh (<code>atmosphere.gdshader</code>):</strong> Simula de forma realista la dispersión de la luz. Si domina el Metano (<code>atm_methane</code>), tiñe la atmósfera de cian profundo y esmeralda brillante. Si domina el CO2 (<code>atm_co2</code>), el Rayleigh-Mie scattering se desvía a tonos ocre, amarillo y naranja quemado. Si predomina el Nitrógeno/Oxígeno (<code>atm_o2_n2 > 0.7</code>), se mantiene azul celeste translúcido.</li>
+      <li><strong>Shader de Nubes (<code>clouds.gdshader</code>):</strong> Genera nubes procedurales cuya densidad se regula por la <code>atm_pressure</code>. Si el periodo de rotación es inferior a 12 horas, las nubes sufren un estiramiento horizontal debido al viento inducido.</li>
+    </ul>
+
+    <h3>10.4 Comportamientos Físicos y Termodinámicos Avanzados</h3>
+    <p>El simulador reacciona dinámicamente según la combinación de variables:</p>
+    <ul>
+      <li><strong>Hielo y Evaporación:</strong> Si <code>planet_temp &lt; 0°C</code>, congela progresivamente el relieve y océanos convirtiéndolos en hielo azulado. Si <code>planet_temp > 100°C</code>, se evapora el agua líquida secando los mares y activando emisión térmica/magma si se acerca a 400°C.</li>
+      <li><strong>Oblatidad Planetaria:</strong> Si el <code>rotation_period_hours &lt; 12h</code> y la <code>planet_mass > 5.0</code>, el motor deforma la escala del planeta (<code>scale.y = 0.85</code>) para simular el achatamiento en los polos provocado por la fuerza centrífuga de la rotación.</li>
+      <li><strong>Gigante Gaseoso:</strong> Si la masa planetaria supera 5.0 masas terrestres, el planeta activa automáticamente una textura de nubes ultradensas y oculta su relieve sólido.</li>
+      <li><strong>Tidal Locking (Acoplamiento de Marea):</strong> Si la distancia orbital es muy corta (<code>star_distance_au &lt; 0.2</code>) y el periodo de rotación es lento, el ciclo día/noche se bloquea; un hemisferio permanece quemado de forma perpetua mientras el otro se congela.</li>
+      <li><strong>Criterio de Viabilidad Biológica:</strong> La vegetación (tonalidad verde <code>#228B22</code>) solo florece si la temperatura superficial se sitúa entre 10°C y 40°C y hay un mínimo de agua líquida del 10% (<code>planet_water > 0.1</code>), validando las estrictas reglas biológicas del compilador.</li>
+    </ul>
   </div>
 
   <!-- SCROLL CONTAINER (CONTENIDO PRINCIPAL) -->
@@ -663,26 +708,152 @@ fin</pre>
             </div>
           </div>
           <div class="pipeline-bar" data-scroll-reveal>
-            <div class="pipeline-label">FLUJO DE COMPILACIÓN ASTRA</div>
+            <div class="pipeline-label">FLUJO DE COMPILACIÓN ASTRA (Haz clic en un paso)</div>
             <div class="pipeline-steps">
-              <div class="pipe-step"><span>LEX</span></div>
+              <div class="pipe-step" data-step="LEX"><span>LEX</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step"><span>PARSE</span></div>
+              <div class="pipe-step" data-step="PARSE"><span>PARSE</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step"><span>AST</span></div>
+              <div class="pipe-step" data-step="AST"><span>AST</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step pipe-step--active"><span>SEM</span></div>
+              <div class="pipe-step pipe-step--active" data-step="SEM"><span>SEM</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step"><span>SIM</span></div>
+              <div class="pipe-step" data-step="SIM"><span>SIM</span></div>
               <div class="pipe-arrow">→</div>
-              <div class="pipe-step pipe-step--pass"><span>REPORTE ✓</span></div>
+              <div class="pipe-step pipe-step--pass" data-step="REPORTE"><span>REPORTE ✓</span></div>
+            </div>
+
+            <!-- Detalle Interactivo de la Fase de Compilación -->
+            <div class="pipeline-detail-card" id="pipeline-detail-card">
+              <div class="detail-card-header">
+                <h4 class="detail-card-title" id="pipeline-detail-title">VALIDACIÓN SEMÁNTICA (SEMANTIC ANALYZER)</h4>
+                <span class="detail-card-badge" id="pipeline-detail-badge">FASE 4 / SEMÁNTICA</span>
+              </div>
+              <div class="detail-card-body">
+                <p class="detail-card-desc" id="pipeline-detail-desc">Fase crítica de coherencia astrobiológica y de tipos lógicos. Recorre el AST validando la semántica formal del programa.</p>
+                <ul class="detail-card-bullets" id="pipeline-detail-bullets">
+                  <li>Implementa una pila de ámbitos para la Tabla de Símbolos, garantizando que no existan variables sin declarar.</li>
+                  <li>Realiza comprobaciones de tipo en asignaciones y operaciones lógicas, comprueba la compatibilidad física de las unidades (evitando sumar °C con kg) y certifica que los bloques y variables obligatorios existan.</li>
+                </ul>
+                <div class="detail-card-code-wrapper">
+                  <div class="detail-card-code-header">
+                    <span>output_log.txt</span>
+                    <span>ACTIVE STATE</span>
+                  </div>
+                  <pre class="detail-card-code" id="pipeline-detail-code"><code>[SEMANTIC SCOPE CHECK]
+ Scope: Global -> OK
+ Scope: Simulacion -> OK
+ Scope: Planeta -> masa (NUM), radio (NUM) -> OK
+ Scope: Atmosfera -> presion (NUM), co2 (NUM) -> OK
+ Scope: Agua -> estado_liquido (BOOL) -> OK
+ Type Verification: Compatible operations ✓
+ Physical Units: km + km = OK ✓
+ Semantic Errors: 0 detected.</code></pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- SECTION 04 — EQUIPO, ROADMAP, FAQ, FOOTER -->
+    <!-- SECTION 04 — INTEGRACIÓN CON GODOT 3D -->
+    <section class="section" id="section-godot">
+      <div class="section-number">04</div>
+      <div class="godot-layout">
+        <div class="godot-text-col">
+          <div class="section-tag" data-scroll-reveal>// SIMULACIÓN 3D EN TIEMPO REAL</div>
+          <h2 class="section-title" data-scroll-reveal>
+            Incrustación de<br />
+            <em>Godot 4 y Shaders</em><br />
+            en la GPU
+          </h2>
+          <p class="section-body" data-scroll-reveal>
+            La simulación planetaria de ASTRA cobra vida a través de una sincronización reactiva en tiempo real con <strong>Godot 4</strong>. El compilador en C# mapea el AST analizado en un objeto de transferencia de datos (PlanetaParametros DTO) y lo serializa a un archivo JSON en <code>%TEMP%</code>, el cual es monitoreado por un FileSystemWatcher en el motor gráfico.
+          </p>
+          <p class="section-body" data-scroll-reveal>
+            El visualizador 3D se incrusta de forma nativa dentro del panel del IDE de Windows Forms utilizando APIs de Win32 (<code>SetParent</code>, <code>MoveWindow</code>, <code>SetWindowLong</code>), eliminando bordes nativos y decoraciones para integrarse como un control nativo del IDE.
+          </p>
+          
+          <div class="godot-tech-tags" data-scroll-reveal>
+            <span class="tech-tag">Win32 API P/Invoke</span>
+            <span class="tech-tag">JSON Sincrónico</span>
+            <span class="tech-tag">GLSL Custom Shaders</span>
+            <span class="tech-tag">Reactive Watcher</span>
+          </div>
+        </div>
+
+        <div class="godot-viewer-panel" data-scroll-reveal>
+          <div class="panel-header">
+            <div class="panel-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="panel-filename">visualizador_astra.exe (Embedded Godot Node)</span>
+            <div class="form-status" style="display: flex; align-items: center; gap: 7px;"><span class="status-dot"></span> REALTIME LINK</div>
+          </div>
+          <div class="godot-panel-body">
+            <div class="telemetry-grid">
+              <div class="telem-card">
+                <span class="card-label">radius (Radio Malla)</span>
+                <div class="telem-progress"><div class="progress-bar" style="width: 63%"></div></div>
+                <span class="card-value">6,371.0 km</span>
+              </div>
+              <div class="telem-card">
+                <span class="card-label">planet_mass (Masa Terrestre)</span>
+                <div class="telem-progress"><div class="progress-bar" style="width: 10%"></div></div>
+                <span class="card-value">1.0 M🜨</span>
+              </div>
+              <div class="telem-card">
+                <span class="card-label">star_distance_au (Órbita)</span>
+                <div class="telem-progress"><div class="progress-bar" style="width: 20%"></div></div>
+                <span class="card-value">1.00 AU</span>
+              </div>
+              <div class="telem-card">
+                <span class="card-label">planet_temp (Temperatura)</span>
+                <div class="telem-progress" style="background: rgba(224,98,54,0.1)"><div class="progress-bar" style="width: 45%; background: var(--color-orange)"></div></div>
+                <span class="card-value" style="color: var(--color-orange)">15.0 °C</span>
+              </div>
+              <div class="telem-card">
+                <span class="card-label">atm_pressure (Presión)</span>
+                <div class="telem-progress"><div class="progress-bar" style="width: 50%"></div></div>
+                <span class="card-value">1.0 atm</span>
+              </div>
+              <div class="telem-card">
+                <span class="card-label">planet_water (Océanos)</span>
+                <div class="telem-progress" style="background: rgba(126,200,227,0.1)"><div class="progress-bar" style="width: 71%; background: #7ec8e3"></div></div>
+                <span class="card-value" style="color: #7ec8e3">71.0 %</span>
+              </div>
+            </div>
+            
+            <div class="shader-display">
+              <div class="shader-header">
+                <span class="shader-name">active_shaders_log.glsl</span>
+                <span class="shader-status">COMPILED ON GPU</span>
+              </div>
+              <pre class="shader-code"><code>// terrain.gdshader - Magma tectónico activo
+if (tectonic_activity > 0.7 && planet_temp > 100.0) {
+    vec3 magma = vec3(1.5, 0.4, 0.0) * glow_intensity;
+    ALBEDO = mix(ALBEDO, magma, noise_magma_lines);
+}
+// atmosphere.gdshader - Dispersión Rayleigh
+if (atm_methane > 0.4) {
+    RAYLEIGH_COLOR = vec3(0.0, 0.82, 0.71); // Esmeralda / Cian
+} else if (atm_co2 > 0.3) {
+    RAYLEIGH_COLOR = vec3(0.85, 0.52, 0.15); // Naranja / Ocre
+}</code></pre>
+            </div>
+          </div>
+          <div class="panel-output">
+            <span class="out-label">SHADERS RENDER STATE</span>
+            <span class="out-text">Rayleigh: <span class="out-val" style="color: #7ec8e3;">Terrestrial Blue</span> · Relieve: <span class="out-val">Procedural FBM</span> · Magma: <span class="out-pass" style="color: var(--color-text-dim);">INACTIVO (T &lt; 100°C)</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 05 — EQUIPO, ROADMAP, FAQ, FOOTER -->
     <section class="section section--footer" id="section-contact">
       <div class="contact-layout" style="max-width: var(--container); margin: 0 auto; padding-bottom: 80px;">
         <div>

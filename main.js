@@ -18,6 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initScrollTriggers(scene);
   initScrollReveal();
   initLaunchButton();
+  initPipelineInteractivity();
 });
 
 /* ──────────────────────────────────────────────────────────
@@ -447,19 +448,35 @@ function initScrollTriggers({ state, wireMesh }) {
 
       /* Zoom into planet */
       state.cameraZ = 6.5 - self.progress * 3.8;
+      state.cameraY = -0.4 + self.progress * 0.2;
     }
   });
 
-  /* ── Section 03 → 04: zoom back out ── */
+  /* ── Section 03 → 04: pull back slightly + shift up + reveal shader solid terrain ── */
+  ScrollTrigger.create({
+    trigger: '#section-godot',
+    start: 'top 80%',
+    end: 'top 20%',
+    scrub: 1.5,
+    onUpdate: self => {
+      state.cameraZ = 2.7 + self.progress * 1.3; // slightly pull back to 4.0
+      state.cameraY = -0.2 + self.progress * 0.6; // tilt up to +0.4
+      state.wireframeBlend = 1.0 - self.progress * 0.7; // fade out wireframe to reveal custom shader textures
+      wireMesh.material.opacity = (1.0 - self.progress * 0.7) * 0.85;
+    }
+  });
+
+  /* ── Section 04 → 05: zoom back out fully for contact/footer ── */
   ScrollTrigger.create({
     trigger: '#section-contact',
     start: 'top 90%',
     end: 'bottom bottom',
     scrub: 1.5,
     onUpdate: self => {
-      state.cameraZ = 2.7 + self.progress * 3;
-      state.wireframeBlend = 1 - self.progress * 0.6;
-      wireMesh.material.opacity = (1 - self.progress * 0.6) * 0.85;
+      state.cameraZ = 4.0 + self.progress * 1.7; // zoom out to 5.7
+      state.cameraY = 0.4 - self.progress * 0.4; // center back to 0
+      state.wireframeBlend = 0.3 * (1.0 - self.progress); // fade wireframe completely
+      wireMesh.material.opacity = 0.3 * (1.0 - self.progress) * 0.85;
     }
   });
 }
@@ -510,6 +527,184 @@ function initLaunchButton() {
   btn.addEventListener('mouseleave', () => {
     gsap.to(btn.querySelector('.btn-launch-glow'), {
       opacity: 0, scale: 1, duration: 0.4, ease: 'power2.in'
+    });
+  });
+}
+
+/* ──────────────────────────────────────────────────────────
+   10. INTERACTIVE PIPELINE
+──────────────────────────────────────────────────────────── */
+function initPipelineInteractivity() {
+  const steps = document.querySelectorAll('.pipe-step');
+  const card  = document.getElementById('pipeline-detail-card');
+  const title = document.getElementById('pipeline-detail-title');
+  const badge = document.getElementById('pipeline-detail-badge');
+  const desc  = document.getElementById('pipeline-detail-desc');
+  const bullets = document.getElementById('pipeline-detail-bullets');
+  const code  = document.getElementById('pipeline-detail-code');
+
+  if (!steps.length || !card) return;
+
+  const data = {
+    LEX: {
+      title: "ANALIZADOR LÉXICO (LEXER)",
+      badge: "FASE 1 / LÉXICO",
+      desc: "Escanea secuencialmente el código ASTRA y segmenta los caracteres en componentes léxicos básicos denominados 'Tokens'.",
+      bullets: [
+        "Reconoce palabras clave (simulacion, planeta, atmosfera, agua, si, mientras, etc.), identificadores de usuario, números, operadores y literales.",
+        "Soporta e identifica unidades físicas opcionales (km, kg, atm, ppm, °C) acopladas a valores numéricos.",
+        "Verifica el alfabeto y detecta errores léxicos al instante, como identificadores mal construidos (ej. '5000colonos') o caracteres prohibidos (@, $, #)."
+      ],
+      code: `[LEXER OUTPUT STREAM]
+ Token 01: PALABRA_RESERVADA("inicio")       [L1, C1]
+ Token 02: PALABRA_RESERVADA("simulacion")   [L2, C5]
+ Token 03: SIMBOLO("{")                      [L2, C16]
+ Token 04: PALABRA_RESERVADA("planeta")      [L3, C9]
+ Token 05: SIMBOLO("{")                      [L3, C17]
+ Token 06: IDENTIFICADOR("masa")             [L4, C13]
+ Token 07: OPERADOR("=")                     [L4, C18]
+ Token 08: NUMERO("5.97e24")                 [L4, C20]
+ Token 09: UNIDAD("kg")                      [L4, C28]
+ Token 10: SIMBOLO(";")                      [L4, C30]`
+    },
+    PARSE: {
+      title: "ANALIZADOR SINTÁCTICO (PARSER)",
+      badge: "FASE 2 / SINTAXIS",
+      desc: "Agrupa el flujo de Tokens generado por el Lexer y verifica que cumpla estrictamente con la gramática formal LL(1) del lenguaje ASTRA.",
+      bullets: [
+        "Comprueba la correcta anidación de bloques ('planeta', 'atmosfera', 'agua') y la delimitación formal del programa ('inicio' y 'fin').",
+        "Valida el orden de sentencias de control (si/sino, mientras), asignaciones válidas finalizadas en punto y coma, y el correcto balanceo de paréntesis y llaves.",
+        "Implementa un recuperador activo de errores (error recovery) para continuar analizando y descubrir múltiples errores sintácticos por compilación."
+      ],
+      code: `[PARSER GRAMMAR PRODUCTION RULES]
+ programa          ::= "inicio" bloqueSimulacion "fin"
+ bloqueSimulacion  ::= "simulacion" "{" { sentencia } "}"
+ sentencia         ::= bloquePlaneta | bloqueAtmosfera | bloqueAgua
+                     | bloqueVida | asignacion | if | while | funcion
+ bloquePlaneta     ::= "planeta" "{" { asignacion } "}"
+ asignacion        ::= identificador "=" valor ";"`
+    },
+    AST: {
+      title: "ABSTRACT SYNTAX TREE (AST)",
+      badge: "FASE 3 / ÁRBOL DE SINTAXIS",
+      desc: "Construye una estructura jerárquica en forma de árbol que representa la semántica lógica pura del código compilado, desprovista de puntuaciones sintácticas.",
+      bullets: [
+        "Transforma las secuencias de texto lineales en nodos lógicos anidados representando construcciones semánticas del programa.",
+        "Sirve como representación intermedia limpia y optimizada sobre la cual operan las lógicas de chequeo de tipos y la posterior simulación.",
+        "Los nodos principales incluyen: NodoPrograma, NodoBloqueSimulacion, NodoIf, NodoAsignacion, NodoExprBinaria, entre otros."
+      ],
+      code: `📖 ÁRBOL SINTÁCTICO (texto):
+ PROGRAMA
+  └─ SIMULACIÓN { ... }
+      ├─ PLANETA
+      │   ├─ masa = 5.97e24 kg
+      │   └─ radio = 6371 km
+      ├─ ATMÓSFERA
+      │   ├─ presion = 1.0 atm
+      │   └─ co2 = 400 ppm
+      └─ AGUA
+          └─ estado_liquido = verdadero`
+    },
+    SEM: {
+      title: "VALIDACIÓN SEMÁNTICA (SEMANTIC ANALYZER)",
+      badge: "FASE 4 / SEMÁNTICA",
+      desc: "Fase crítica de coherencia astrobiológica y de tipos lógicos. Recorre el AST validando la semántica formal del programa.",
+      bullets: [
+        "Implementa una pila de ámbitos para la Tabla de Símbolos, garantizando que no existan variables sin declarar.",
+        "Realiza comprobaciones de tipo en asignaciones y operaciones lógicas, comprueba la compatibilidad física de las unidades (evitando sumar °C con kg) y certifica que los bloques y variables obligatorios existan.",
+        "Genera advertencias y errores altamente explicativos marcados con códigos 'SEM-xxx' con fila y columna exactas."
+      ],
+      code: `[SEMANTIC SCOPE CHECK]
+ Scope: Global -> OK
+ Scope: Simulacion -> OK
+ Scope: Planeta -> masa (NUM), radio (NUM) -> OK
+ Scope: Atmosfera -> presion (NUM), co2 (NUM) -> OK
+ Scope: Agua -> estado_liquido (BOOL) -> OK
+ Type Verification: Compatible operations ✓
+ Physical Units: km + km = OK ✓
+ Semantic Errors: 0 detected.`
+    },
+    SIM: {
+      title: "MOTOR DE EJECUCIÓN (SIMULATOR)",
+      badge: "FASE 5 / SIMULACIÓN",
+      desc: "Intérprete nativo de simulación que recorre el AST validado y procesa las operaciones físicas en tiempo de ejecución.",
+      bullets: [
+        "Procesa las lógicas imperativas de control (si, mientras, llamadas a funciones) y evalúa expresiones matemáticas y aritméticas de forma determinista.",
+        "Mapea las variables físicas a una estructura DTO unificada, serializándola a un JSON temporal.",
+        "Controla la simulación 3D en tiempo real comunicándose de forma bidireccional con el visualizador de Godot 4."
+      ],
+      code: `[SIMULATOR ENGINE ACTIVE]
+ Executing Loop: 'mientras' (co2 > 0)
+ Variable update: co2 = 399 ppm -> 398 ppm -> 397 ppm...
+ Event: 'si' condition triggered (gravedad > 8)
+ Log: "Gravedad óptima para terraformación."
+ Rendering dynamic parameters: Radius scaled, water level updated.`
+    },
+    REPORTE: {
+      title: "GENERADOR DE REPORTES Y TELEMETRÍA",
+      badge: "FASE 6 / INFORME",
+      desc: "Fase final de salida estructurada que reúne los resultados de las instrucciones de simulación y genera el informe de habitabilidad.",
+      bullets: [
+        "Recopila las salidas textuales generadas por los comandos de simulación 'mostrar()' y 'reporte()'.",
+        "Calcula el Índice de Similitud Terrestre (ESI) y genera firmas de espectros ópticos y biofirmas planetarias.",
+        "Escribe un informe astrobiológico completo listo para validar la viabilidad del planeta terraformado."
+      ],
+      code: `==========================================
+          INFORME DE SIMULACIÓN ASTRA
+==========================================
+* Planeta: Habitable (Estable)
+* Índice de Similitud Terrestre (ESI): 0.89
+* Temperatura Superficial Promedio: 15.0 °C
+* Estado de la Biomasa: Favorable
+* Espectro de Biofirma: Translucido Celeste
+==========================================
+STATUS: COMPILACIÓN Y SIMULACIÓN EXITOSA ✓`
+    }
+  };
+
+  steps.forEach(step => {
+    step.addEventListener('click', () => {
+      const type = step.getAttribute('data-step');
+      if (!type || !data[type]) return;
+
+      // Update active classes
+      steps.forEach(s => {
+        s.classList.remove('pipe-step--active');
+        s.classList.remove('pipe-step--pass');
+      });
+      step.classList.add('pipe-step--active');
+
+      // Animate transition using GSAP
+      gsap.to(card, {
+        opacity: 0,
+        y: -10,
+        duration: 0.2,
+        onComplete: () => {
+          // Update details
+          title.textContent = data[type].title;
+          badge.textContent = data[type].badge;
+          desc.textContent = data[type].desc;
+
+          // Bullets
+          bullets.innerHTML = '';
+          data[type].bullets.forEach(bulletText => {
+            const li = document.createElement('li');
+            li.textContent = bulletText;
+            bullets.appendChild(li);
+          });
+
+          // Code
+          code.querySelector('code').textContent = data[type].code;
+
+          // Animate back in
+          gsap.to(card, {
+            opacity: 1,
+            y: 0,
+            duration: 0.35,
+            ease: 'power2.out'
+          });
+        }
+      });
     });
   });
 }
